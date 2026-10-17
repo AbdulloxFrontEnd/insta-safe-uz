@@ -1118,33 +1118,77 @@ async function handleFileUpload(event) {
   }
 }
 
-// Render Results
+// Render Results into Popup Modal Window & on-page Container
 function renderResults(result, queryTitle) {
   const container = document.getElementById('resultsContainer');
-  container.classList.remove('hidden');
-  container.classList.remove('panel-animate');
-  void container.offsetWidth;
-  container.classList.add('panel-animate');
+  const modalContent = document.getElementById('resultsModalContent');
+  if (container) {
+    container.classList.remove('hidden');
+    container.classList.remove('panel-animate');
+    void container.offsetWidth;
+    container.classList.add('panel-animate');
+  }
+
   const t = I18N[currentLang];
+  let html = '';
 
   if (result.is_safe) {
     try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('success'); } catch (e) {}
 
-    container.innerHTML = `
-      <div class="glass-card rounded-3xl p-6 sm:p-8 border-2 border-emerald-400 dark:border-emerald-500/50 bg-emerald-50/40 dark:bg-emerald-950/25 text-center space-y-4 shadow-xl">
-        <div class="w-16 h-16 mx-auto rounded-3xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
-          <i data-lucide="shield-check" class="w-9 h-9"></i>
+    // Detected channels preview pills if available (from screenshot or batch)
+    let detectedChannelsHtml = '';
+    if (result.detected_channels && result.detected_channels.length > 0) {
+      const channelPills = result.detected_channels.slice(0, 16).map(c => `
+        <span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-emerald-100/90 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-300/70 dark:border-emerald-800/70">
+          <i data-lucide="check" class="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0"></i>
+          <span class="truncate max-w-[170px] sm:max-w-[220px]">${c}</span>
+        </span>
+      `).join('');
+
+      detectedChannelsHtml = `
+        <div class="pt-3 border-t border-emerald-200/70 dark:border-emerald-900/60 text-left">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-[11px] font-extrabold text-emerald-900 dark:text-emerald-300 flex items-center space-x-1.5">
+              <i data-lucide="list-checks" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
+              <span>${currentLang === 'uz' ? "Aniqlangan va tekshirilgan obunalar:" : "Распознанные и проверенные подписки:"}</span>
+            </p>
+            <span class="text-[10px] font-black text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-full">
+              ${result.detected_channels.length} ta
+            </span>
+          </div>
+          <div class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+            ${channelPills}
+          </div>
         </div>
+      `;
+    }
+
+    html = `
+      <div class="glass-card rounded-3xl p-5 sm:p-7 border-2 border-emerald-400 dark:border-emerald-500/60 bg-emerald-50/50 dark:bg-emerald-950/30 text-center space-y-4 shadow-2xl">
+        <div class="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-3xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center shadow-xl shadow-emerald-500/30 pulse-glow">
+          <i data-lucide="shield-check" class="w-10 h-10 sm:w-12 sm:h-12 stroke-[2.2]"></i>
+        </div>
+
         <div>
-          <span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 uppercase tracking-wider mb-2">Xavfsiz / Безопасно</span>
+          <span class="inline-block px-3 py-1 rounded-full text-xs font-black bg-emerald-100 dark:bg-emerald-900/70 text-emerald-800 dark:text-emerald-300 uppercase tracking-wider mb-2">
+            ${currentLang === 'uz' ? "Xavfsiz / Toza" : "Безопасно / Чисто"}
+          </span>
           <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">${t.safeTitle}</h2>
-          <p class="text-slate-600 dark:text-slate-300 text-xs sm:text-sm max-w-md mx-auto mt-2">
+          <p class="text-slate-600 dark:text-slate-300 text-xs sm:text-sm max-w-md mx-auto mt-2 leading-relaxed">
             ${t.safeDesc.replace('{count}', result.total_checked)}
           </p>
         </div>
-        <div class="pt-2">
-          <button onclick="hideResults()" class="px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-indigo-600 text-white text-xs font-bold hover:bg-slate-800 dark:hover:bg-indigo-700 transition shadow">
-            ${t.btnCheckAgain}
+
+        ${detectedChannelsHtml}
+
+        <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2">
+          <button onclick="closeResultsModal()" class="w-full sm:flex-1 py-3 px-5 rounded-2xl bg-slate-900 dark:bg-indigo-600 text-white text-xs sm:text-sm font-black hover:bg-slate-800 dark:hover:bg-indigo-700 transition shadow-lg touch-ripple flex items-center justify-center space-x-1.5">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            <span>${t.btnCheckAgain}</span>
+          </button>
+          <button onclick="shareToTelegram()" class="w-full sm:w-auto py-3 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-extrabold transition shadow flex items-center justify-center space-x-1.5 touch-ripple">
+            <i data-lucide="send" class="w-4 h-4"></i>
+            <span>${currentLang === 'uz' ? "Do'stlarga ulashish" : "Поделиться"}</span>
           </button>
         </div>
       </div>
@@ -1163,21 +1207,21 @@ function renderResults(result, queryTitle) {
       else if (plat.includes('FACEBOOK') && targetHandle) linkUrl = `https://facebook.com/${targetHandle}`;
 
       return `
-        <div class="bg-white dark:bg-slate-900 rounded-2xl p-3.5 sm:p-4 border border-rose-200 dark:border-rose-900/50 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-rose-400 dark:hover:border-rose-500 transition">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-3.5 sm:p-4 border-2 border-rose-300 dark:border-rose-900/70 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-rose-500 transition">
           <div class="flex items-start space-x-2.5 sm:space-x-3 min-w-0">
             <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300 flex items-center justify-center font-black text-xs shrink-0 mt-0.5 sm:mt-0">
               #${b.id || '?'}
             </div>
-            <div class="truncate">
+            <div class="truncate text-left">
               <div class="flex items-center space-x-2">
                 <span class="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm truncate">@${item.username || b.title}</span>
                 <span class="text-[9px] font-semibold px-2 py-0.2 rounded-full bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 shrink-0">${plat}</span>
               </div>
-              <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">Sud yozuvi: <b class="text-slate-700 dark:text-slate-200">${b.original || b.title}</b></p>
+              <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">Sud qarori: <b class="text-rose-700 dark:text-rose-400 font-bold">${b.original || b.title}</b></p>
             </div>
           </div>
           ${linkUrl ? `
-            <a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow transition shrink-0">
+            <a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="w-full sm:w-auto px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow transition shrink-0">
               <span>${t.unsubscribeBtn}</span>
               <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
             </a>
@@ -1186,53 +1230,85 @@ function renderResults(result, queryTitle) {
       `;
     }).join('');
 
-    container.innerHTML = `
-      <div class="glass-card rounded-3xl p-6 sm:p-8 border-2 border-rose-500 dark:border-rose-600/70 bg-rose-50/30 dark:bg-rose-950/20 space-y-5 shadow-xl">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-rose-200 dark:border-rose-900/60 pb-4">
-          <div class="flex items-center space-x-3">
-            <div class="w-12 h-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center shadow-lg shadow-rose-600/30 shrink-0">
-              <i data-lucide="alert-triangle" class="w-6 h-6"></i>
-            </div>
-            <div>
-              <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white uppercase tracking-wider mb-0.5">Xavf / Опасность</span>
-              <h2 class="text-xl font-black text-slate-900 dark:text-white">${t.bannedTitle.replace('{count}', result.banned_count)}</h2>
-              <p class="text-xs text-slate-600 dark:text-slate-400">Jami tekshirildi: ${result.total_checked} ta obuna/manba</p>
-            </div>
+    html = `
+      <div class="glass-card rounded-3xl p-5 sm:p-7 border-2 border-rose-500 dark:border-rose-600/70 bg-rose-50/40 dark:bg-rose-950/30 space-y-4 shadow-2xl">
+        <div class="flex items-center space-x-3 text-left border-b border-rose-200 dark:border-rose-900/60 pb-4">
+          <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-rose-600 text-white flex items-center justify-center shadow-lg shadow-rose-600/40 shrink-0 animate-pulse">
+            <i data-lucide="alert-triangle" class="w-7 h-7 stroke-[2.2]"></i>
           </div>
-          <button onclick="hideResults()" class="self-start sm:self-auto px-3.5 py-2 rounded-xl bg-slate-900 dark:bg-indigo-600 text-white text-xs font-bold hover:bg-slate-800 dark:hover:bg-indigo-700 transition">
-            ${t.hideBtn}
-          </button>
+          <div>
+            <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white uppercase tracking-wider mb-0.5">Xavf / Опасность</span>
+            <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white">${t.bannedTitle.replace('{count}', result.banned_count)}</h2>
+            <p class="text-xs text-slate-600 dark:text-slate-400">Jami tekshirildi: ${result.total_checked} ta obuna / kanal</p>
+          </div>
         </div>
 
-        <div class="space-y-2.5">
-          <h4 class="font-bold text-slate-800 dark:text-slate-200 text-xs">Zudlik bilan chiqib ketish (unfollow) tavsiya etiladigan kanallar:</h4>
+        <div class="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+          <h4 class="font-bold text-slate-800 dark:text-slate-200 text-xs text-left">Zudlik bilan chiqib ketish (unfollow) tavsiya etiladi:</h4>
           ${itemsHtml}
         </div>
 
-        <div class="bg-rose-100/80 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900/60 rounded-2xl p-3.5 text-xs text-rose-900 dark:text-rose-200 leading-relaxed">
+        <div class="bg-rose-100/90 dark:bg-rose-950/70 border border-rose-200 dark:border-rose-900/60 rounded-2xl p-3 text-[11px] sm:text-xs text-rose-900 dark:text-rose-200 leading-relaxed text-left">
           ${t.bannedAlertNote}
+        </div>
+
+        <div class="pt-2 flex flex-col sm:flex-row items-center gap-2">
+          <button onclick="closeResultsModal()" class="w-full py-2.5 px-4 rounded-xl bg-slate-900 dark:bg-indigo-600 text-white font-extrabold text-xs shadow hover:bg-slate-800 transition">
+            ${currentLang === 'uz' ? "Tushundim, yopish" : "Понятно, закрыть"}
+          </button>
         </div>
       </div>
     `;
   }
 
+  if (container) container.innerHTML = html;
+  if (modalContent) modalContent.innerHTML = html;
+
+  // Open popup modal immediately so user sees results front and center
+  openModal('resultsModal', 'resultsModalDialog');
   lucide.createIcons();
-  container.scrollIntoView({ behavior: 'smooth' });
+}
+
+function closeResultsModal() {
+  closeModal('resultsModal', 'resultsModalDialog');
+  const target = document.getElementById('searchArea') || document.getElementById('dropZone') || document.getElementById('singleQueryInput');
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 }
 
 function renderErrorAlert(msg) {
   const container = document.getElementById('resultsContainer');
-  container.classList.remove('hidden');
-  container.innerHTML = `
-    <div class="glass-card rounded-3xl p-5 border border-rose-300 bg-rose-50 text-center space-y-1.5">
-      <p class="text-rose-700 font-bold text-xs">Xatolik: ${msg}</p>
-      <button onclick="hideResults()" class="text-[11px] text-slate-500 underline">Yopish</button>
+  const modalContent = document.getElementById('resultsModalContent');
+  const errorHtml = `
+    <div class="glass-card rounded-3xl p-6 border-2 border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-center space-y-3 shadow-xl">
+      <div class="w-12 h-12 mx-auto rounded-2xl bg-rose-100 dark:bg-rose-900 text-rose-600 dark:text-rose-300 flex items-center justify-center font-bold">
+        <i data-lucide="alert-circle" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-black text-rose-800 dark:text-rose-200">${currentLang === 'uz' ? "Xatolik" : "Ошибка"}</h3>
+        <p class="text-rose-700 dark:text-rose-300 font-semibold text-xs mt-1">${msg}</p>
+      </div>
+      <button onclick="closeResultsModal()" class="px-5 py-2 rounded-xl bg-slate-900 dark:bg-indigo-600 text-white text-xs font-bold hover:bg-slate-800 transition shadow">
+        ${currentLang === 'uz' ? "Yopish" : "Закрыть"}
+      </button>
     </div>
   `;
+  if (container) {
+    container.classList.remove('hidden');
+    container.innerHTML = errorHtml;
+  }
+  if (modalContent) {
+    modalContent.innerHTML = errorHtml;
+    openModal('resultsModal', 'resultsModalDialog');
+  }
+  lucide.createIcons();
 }
 
 function hideResults() {
-  document.getElementById('resultsContainer').classList.add('hidden');
+  closeResultsModal();
+  const c = document.getElementById('resultsContainer');
+  if (c) c.classList.add('hidden');
 }
 
 function showLoading(show, title = "", subtitle = "") {
