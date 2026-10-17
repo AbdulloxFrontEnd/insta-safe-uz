@@ -35,9 +35,17 @@ app.add_middleware(
 
 @app.middleware("http")
 async def vercel_routing_and_cache_middleware(request: Request, call_next):
-    # Restore original path if rewritten by Vercel
+    # 1. If path is passed via query param (from Vercel rewrites: /api/:path* -> /api/index.py?path=:path*)
+    path_param = request.query_params.get("path")
+    if path_param:
+        clean = path_param.strip("/")
+        request.scope["path"] = f"/api/{clean}"
+    elif request.scope.get("path") in ["/api/index.py", "/api/index", "/index.py"]:
+        request.scope["path"] = "/"
+
+    # 2. Check x-matched-path fallback
     matched = request.headers.get("x-matched-path")
-    if matched and matched != request.scope.get("path") and not matched.endswith("index.py") and not matched.endswith("index"):
+    if matched and not matched.endswith("index.py") and not matched.endswith("index"):
         request.scope["path"] = matched
 
     response = await call_next(request)
