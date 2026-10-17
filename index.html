@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>InstaSafe UZ — Telegram, YouTube, Instagram & Facebook Xavfsizlik Tizimi</title>
+  <!-- Telegram WebApp JS SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            darkbg: '#0b0f19',
+            darkcard: '#151e2e',
+            darkborder: '#243247'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      transition: background-color 0.25s ease, color 0.25s ease;
+      padding-top: max(env(safe-area-inset-top), 0px);
+      padding-bottom: max(env(safe-area-inset-bottom), 16px);
+      touch-action: manipulation;
+      background-color: #f1f4f9;
+      color: #1e293b;
+    }
+    .glass-card {
+      position: relative;
+      background: rgba(255, 255, 255, 0.74);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.88);
+      box-shadow: 0 10px 30px -5px rgba(99, 102, 241, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+      transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    header {
+      background: rgba(241, 244, 249, 0.85) !important;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-color: rgba(226, 232, 240, 0.8) !important;
+    }
+    .insta-gradient {
+      background: linear-gradient(135deg, #0284c7 0%, #4f46e5 50%, #7c3aed 100%);
+    }
+    .hero-text-gradient {
+      background: linear-gradient(135deg, #0284c7, #4f46e5, #dc2626);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); }
+      50% { box-shadow: 0 0 0 12px rgba(79, 70, 229, 0); }
+    }
+    .pulse-glow { animation: pulseGlow 2.5s infinite; }
+
+    /* GRADIENT FLOW & MICRO INTERACTIONS FOR MOBILE */
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .animate-gradient-flow {
+      background-size: 200% 200% !important;
+      animation: gradientShift 4s ease infinite;
+    }
+    .touch-ripple {
+      position: relative;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+    }
+    .touch-ripple:active {
+      transform: scale(0.96);
+    }
+
+    /* BRAND PLATFORM GLOWS & ACTIVE STATES */
+    .plat-active-telegram {
+      background: linear-gradient(135deg, #0088cc 0%, #0ea5e9 100%) !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 18px rgba(14, 165, 233, 0.55), 0 4px 10px rgba(0, 136, 204, 0.35) !important;
+      border: 1px solid rgba(255, 255, 255, 0.45) !important;
+      transform: scale(1.02);
+    }
+    .plat-active-youtube {
+      background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%) !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 18px rgba(239, 68, 68, 0.65), 0 4px 12px rgba(220, 38, 38, 0.4) !important;
+      border: 1px solid rgba(255, 255, 255, 0.45) !important;
+      transform: scale(1.02);
+    }
+    .plat-active-instagram {
+      background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%) !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 20px rgba(225, 48, 108, 0.65), 0 4px 12px rgba(204, 35, 102, 0.45) !important;
+      border: 1px solid rgba(255, 255, 255, 0.45) !important;
+      transform: scale(1.02);
+    }
+    .plat-active-facebook {
+      background: linear-gradient(135deg, #1877f2 0%, #2563eb 100%) !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 18px rgba(37, 99, 235, 0.65), 0 4px 10px rgba(24, 119, 242, 0.4) !important;
+      border: 1px solid rgba(255, 255, 255, 0.45) !important;
+      transform: scale(1.02);
+    }
+    .plat-active-tiktok {
+      background: linear-gradient(135deg, #09090b 0%, #18181b 50%, #000000 100%) !important;
+      color: #ffffff !important;
+      box-shadow: -4px 0 16px rgba(0, 242, 254, 0.5), 4px 0 16px rgba(254, 44, 85, 0.5) !important;
+      border: 1px solid rgba(0, 242, 254, 0.55) !important;
+      transform: scale(1.02);
+    }
+
+    /* ALL ACTIVE PLATFORM BUTTONS: LOGO AND TEXT MUST BE 100% CRISP WHITE */
+    .plat-active-telegram svg,
+    .plat-active-youtube svg,
+    .plat-active-instagram svg,
+    .plat-active-facebook svg,
+    .plat-active-tiktok svg {
+      color: #ffffff !important;
+      fill: #ffffff !important;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+    }
+    .plat-active-telegram span,
+    .plat-active-youtube span,
+    .plat-active-instagram span,
+    .plat-active-facebook span,
+    .plat-active-tiktok span {
+      color: #ffffff !important;
+      font-weight: 800 !important;
+    }
+
+    .plat-inactive {
+      background-color: transparent !important;
+      color: #64748b !important;
+      border: 1px solid transparent !important;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    html.dark .plat-inactive {
+      color: #94a3b8 !important;
+    }
+    .plat-inactive:hover {
+      background-color: rgba(255, 255, 255, 0.7) !important;
+      color: #0f172a !important;
+      transform: translateY(-1px);
+    }
+    html.dark .plat-inactive:hover {
+      background-color: rgba(30, 41, 59, 0.6) !important;
+      color: #f8fafc !important;
+      transform: translateY(-1px);
+    }
+
+    /* INACTIVE BUTTONS: SHOW AUTHENTIC BRAND COLORS ON ICONS */
+    #platBtnTelegram.plat-inactive svg, #tutTab_telegram:not([class*="plat-active"]) svg {
+      color: #0088cc !important;
+      fill: #0088cc !important;
+    }
+    #platBtnYoutube.plat-inactive svg, #tutTab_youtube:not([class*="plat-active"]) svg {
+      color: #dc2626 !important;
+      fill: #dc2626 !important;
+    }
+    #platBtnInstagram.plat-inactive svg, #tutTab_instagram:not([class*="plat-active"]) svg {
+      color: #e1306c !important;
+      fill: #e1306c !important;
+    }
+    #platBtnFacebook.plat-inactive svg, #tutTab_facebook:not([class*="plat-active"]) svg {
+      color: #1877f2 !important;
+      fill: #1877f2 !important;
+    }
+    #platBtnTiktok.plat-inactive svg, #tutTab_tiktok:not([class*="plat-active"]) svg {
+      color: #0f172a !important;
+      fill: #0f172a !important;
+    }
+    html.dark #platBtnTiktok.plat-inactive svg, html.dark #tutTab_tiktok:not([class*="plat-active"]) svg {
+      color: #22d3ee !important;
+      fill: #22d3ee !important;
+    }
+
+    /* SHIMMER BORDER ON DYNAMIC ACTION CARD */
+    @keyframes shimmerBorder {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .shimmer-card {
+      position: relative;
+      border-radius: 1.25rem;
+      background: linear-gradient(60deg, #6366f1, #a855f7, #ec4899, #06b6d4, #6366f1);
+      background-size: 300% 300%;
+      animation: shimmerBorder 6s ease infinite;
+      padding: 1.5px;
+    }
+    .shimmer-inner {
+      background: #ffffff;
+      border-radius: calc(1.25rem - 1.5px);
+    }
+    html.dark .shimmer-inner {
+      background: #0f172a;
+    }
+
+    .dragover {
+      border-color: #4f46e5 !important;
+      background-color: #eef2ff !important;
+      transform: scale(1.01);
+    }
+
+    /* INTERACTIVE AURORA MESH BACKGROUND */
+    #interactiveMeshBg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    #mouseGlowSphere {
+      position: absolute;
+      width: 550px;
+      height: 550px;
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      filter: blur(75px);
+      will-change: left, top;
+      background: radial-gradient(
+        circle,
+        rgba(99, 102, 241, 0.48) 0%,
+        rgba(168, 85, 247, 0.32) 35%,
+        rgba(6, 182, 212, 0.18) 65%,
+        transparent 80%
+      );
+    }
+    html.dark #mouseGlowSphere {
+      background: radial-gradient(
+        circle,
+        rgba(99, 102, 241, 0.45) 0%,
+        rgba(147, 51, 234, 0.30) 35%,
+        rgba(14, 165, 233, 0.18) 65%,
+        transparent 80%
+      );
+    }
+    #viralShareCard {
+      position: relative !important;
+      z-index: 25 !important;
+      isolation: isolate !important;
+    }
+
+    /* Scrollbar suppression & Momentum Scrolling */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none !important;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none !important;
+      scrollbar-width: none !important;
+    }
+    #platformSelector {
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+    #platformSelector::-webkit-scrollbar {
+      display: none;
+    }
+    #drawerMenuOverlay {
+      transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #drawerMenuPanel {
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* SILKY MODAL AND DIALOG TRANSITIONS */
+    .modal-overlay {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), backdrop-filter 0.28s ease;
+      will-change: opacity;
+    }
+    .modal-overlay.modal-open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-card {
+      transform: translateY(16px) scale(0.96);
+      opacity: 0;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform, opacity;
+    }
+    .modal-card.modal-card-open {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    /* SMOOTH PANEL & TAB TRANSITIONS */
+    @keyframes panelGlideIn {
+      0% {
+        opacity: 0;
+        transform: translateY(8px) scale(0.995);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    .panel-animate {
+      animation: panelGlideIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      will-change: opacity, transform;
+    }
+
+    /* SMOOTH GIF CROSSFADE IN TUTORIAL */
+    #tutGifImg {
+      transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform;
+    }
+
+    /* INTERACTIVE 3D TILT EFFECT & SPECULAR GLARE */
+    .tilt-3d {
+      position: relative;
+      transform-style: preserve-3d;
+      will-change: transform;
+      transform: perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1);
+    }
+    .tilt-glare-layer {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      z-index: 20;
+    }
+    .tilt-glare-highlight {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      will-change: background;
+    }
+    .tilt-parallax-sm {
+      transform: translateZ(12px);
+      transform-style: preserve-3d;
+    }
+    .tilt-parallax-md {
+      transform: translateZ(22px);
+      transform-style: preserve-3d;
+    }
+    .tilt-parallax-lg {
+      transform: translateZ(32px);
+      transform-style: preserve-3d;
+    }
+
+    html, body {
+      overflow-x: hidden !important;
+      max-width: 100vw;
+      width: 100%;
+    }
+
+    /* DARK MODE STYLES */
+    html.dark body {
+      background-color: #0d0e15;
+      color: #e2e8f0;
+    }
+    html.dark .glass-card {
+      background: rgba(15, 23, 42, 0.82);
+      border-color: rgba(51, 65, 85, 0.7);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    }
+    html.dark header {
+      background: rgba(11, 15, 25, 0.95) !important;
+      border-color: #1e293b !important;
+    }
+    html.dark .bg-slate-50 { background-color: #0b0f19 !important; }
+    html.dark .bg-slate-100 { background-color: #151e2e !important; }
+    html.dark .bg-slate-200 { background-color: #1e293b !important; }
+    html.dark .bg-slate-200\/80, html.dark .bg-slate-200\/70 { background-color: rgba(21, 30, 46, 0.85) !important; }
+    html.dark .bg-white { background-color: #151e2e !important; }
+    html.dark .text-slate-900 { color: #f8fafc !important; }
+    html.dark .text-slate-800 { color: #f1f5f9 !important; }
+    html.dark .text-slate-700 { color: #cbd5e1 !important; }
+    html.dark .text-slate-600 { color: #94a3b8 !important; }
+    html.dark .text-slate-500 { color: #64748b !important; }
+    html.dark .border-slate-200 { border-color: #1e293b !important; }
+    html.dark .border-slate-300 { border-color: #334155 !important; }
+
+    /* Dark Mode Dropzones (NO bright white flashes) */
+    html.dark #dropZone, html.dark #screenshotDropZone {
+      background-color: rgba(15, 23, 42, 0.75) !important;
+      border-color: rgba(51, 65, 85, 0.8) !important;
+    }
+    html.dark #dropZone:hover, html.dark #screenshotDropZone:hover {
+      background-color: rgba(21, 30, 46, 0.85) !important;
+      border-color: #818cf8 !important;
+      box-shadow: 0 0 30px rgba(99, 102, 241, 0.25);
+    }
+    html.dark .dragover {
+      border-color: #818cf8 !important;
+      background-color: rgba(99, 102, 241, 0.2) !important;
+      box-shadow: 0 0 35px rgba(99, 102, 241, 0.35) !important;
+      transform: scale(1.01);
+    }
+
+    /* Dark Mode Loading State */
+    html.dark #loadingBox {
+      background-color: rgba(15, 23, 42, 0.95) !important;
+      border-color: rgba(99, 102, 241, 0.35) !important;
+    }
+
+    /* Indigo & Accent Boxes in Dark Mode */
+    html.dark .bg-indigo-50, html.dark .bg-indigo-50\/70, html.dark .bg-indigo-50\/30, html.dark .bg-indigo-50\/40, html.dark .bg-indigo-50\/50, html.dark .bg-indigo-50\/60 {
+      background-color: rgba(30, 27, 75, 0.6) !important;
+    }
+    html.dark .text-indigo-950, html.dark .text-indigo-900 { color: #e0e7ff !important; }
+    html.dark .text-indigo-700, html.dark .text-indigo-600 { color: #a5b4fc !important; }
+    html.dark .border-indigo-100, html.dark .border-indigo-200, html.dark .border-indigo-300 {
+      border-color: rgba(99, 102, 241, 0.35) !important;
+    }
+
+    /* Rose (Danger) Box in Dark Mode */
+    html.dark .bg-rose-50, html.dark .bg-rose-50\/30, html.dark .bg-rose-50\/40, html.dark .bg-rose-100, html.dark .bg-rose-100\/80 {
+      background-color: rgba(76, 5, 25, 0.5) !important;
+      color: #fecdd3 !important;
+    }
+    html.dark .text-rose-900, html.dark .text-rose-700 { color: #fecdd3 !important; }
+    html.dark .border-rose-200, html.dark .border-rose-300 { border-color: rgba(244, 63, 94, 0.4) !important; }
+
+    /* Emerald (Safe) Box in Dark Mode */
+    html.dark .bg-emerald-50, html.dark .bg-emerald-50\/40 {
+      background-color: rgba(6, 78, 59, 0.45) !important;
+    }
+    html.dark .text-emerald-700, html.dark .text-emerald-800 { color: #6ee7b7 !important; }
+    html.dark .border-emerald-200 { border-color: rgba(16, 185, 129, 0.4) !important; }
+
+    html.dark input {
+      background-color: #111827 !important;
+      color: #ffffff !important;
+      border-color: #374151 !important;
+    }
+    html.dark table thead { background-color: #111827 !important; color: #94a3b8 !important; }
+    html.dark table tbody tr:hover { background-color: #1e293b !important; }
+    html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: #1e293b !important; }
+    html.dark #paymentModal > div, html.dark #tutorialModal > div {
+      background-color: #0f172a !important;
+      border-color: #1e293b !important;
+      color: #f8fafc !important;
+    }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white pb-8 relative overflow-x-hidden">
+
+  <!-- INTERACTIVE MOUSE GRADIENT CIRCLE (FOLLOWS CURSOR) -->
+  <div id="interactiveMeshBg">
+    <div id="mouseGlowSphere"></div>
+  </div>
+
+  <!-- APP SPLASH SCREEN (INTRO LOADER) -->
+  <div id="appSplashScreen" class="fixed inset-0 z-50 bg-slate-900 flex flex-col items-center justify-center transition-all duration-700 ease-out">
+    <div class="relative flex flex-col items-center space-y-6">
+      <div class="relative">
+        <div class="absolute -inset-4 bg-gradient-to-tr from-indigo-600 to-sky-500 rounded-3xl blur-2xl opacity-50 animate-pulse"></div>
+        <div class="w-24 h-24 rounded-3xl insta-gradient flex items-center justify-center text-white shadow-2xl relative z-10 pulse-glow">
+          <i data-lucide="shield-check" class="w-12 h-12 stroke-[2.2]"></i>
+        </div>
+      </div>
+      <div class="text-center space-y-2 relative z-10">
+        <div class="flex items-center justify-center space-x-2">
+          <h1 class="text-3xl font-black tracking-tight text-white">InstaSafe</h1>
+          <span class="px-2 py-0.5 rounded-full text-xs font-black bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">UZ</span>
+        </div>
+        <p class="text-xs font-semibold text-slate-400 tracking-wider uppercase">Multi-Platform Scanner • 2026</p>
+      </div>
+      <div class="w-48 bg-slate-800 rounded-full h-2 overflow-hidden p-0.5 border border-slate-700/80 relative z-10 shadow-inner">
+        <div id="splashProgressBar" class="h-full bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 rounded-full transition-all duration-300 ease-out" style="width: 5%;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Splash Screen Bulletproof Fail-safe -->
+  <script>
+    setTimeout(function() {
+      var sp = document.getElementById('appSplashScreen');
+      if (sp && !sp.classList.contains('hidden')) {
+        sp.style.opacity = '0';
+        sp.style.pointerEvents = 'none';
+        setTimeout(function() { sp.classList.add('hidden'); }, 300);
+      }
+    }, 2000);
+  </script>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
+    <div class="max-w-4xl mx-auto px-3.5 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
+      <!-- LEFT: Brand Logo & Title -->
+      <div class="flex items-center space-x-2 sm:space-x-2.5 min-w-0">
+        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl insta-gradient flex items-center justify-center text-white shadow-md shadow-indigo-500/20 shrink-0">
+          <i data-lucide="shield-check" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+        </div>
+        <div class="truncate">
+          <div class="flex items-center space-x-1 sm:space-x-1.5">
+            <span class="font-black text-sm sm:text-base tracking-tight text-slate-900 dark:text-white">InstaSafe</span>
+            <span class="text-[9px] sm:text-[10px] font-extrabold px-1.5 py-0.2 rounded-full bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200/80 dark:border-indigo-800/80">UZ</span>
+          </div>
+          <p id="telegramUserGreeting" class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate max-w-[130px] sm:max-w-none">Xavfsizlik tizimi</p>
+        </div>
+      </div>
+
+      <!-- RIGHT: Checks balance, Language toggle, Menu Button -->
+      <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+        <!-- Desktop Navigation Tabs (inline on desktop, hidden on mobile) -->
+        <nav class="hidden md:flex items-center space-x-1 mr-1">
+          <button onclick="switchTab('check')" id="tabBtnCheck" class="px-3 py-1.5 rounded-xl text-xs font-bold transition bg-slate-900 dark:bg-indigo-600 text-white shadow-sm flex items-center space-x-1">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+            <span id="tabCheckText">Tekshirish</span>
+          </button>
+          <button onclick="switchTab('registry')" id="tabBtnRegistry" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center space-x-1">
+            <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+            <span id="tabRegistryText">Reyestr (1560+)</span>
+          </button>
+        </nav>
+
+        <!-- 1. Checks Count Badge -->
+        <button onclick="openPaymentModal()" id="userChecksBadge" class="flex items-center space-x-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-black bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 transition shadow-sm touch-ripple">
+          <i data-lucide="sparkles" class="w-3 h-3 text-emerald-500"></i>
+          <span id="userChecksText">1 bepul</span>
+        </button>
+
+        <!-- 2. Language Toggle Button -->
+        <button onclick="toggleLanguage()" id="langToggleBtn" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-black bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition flex items-center space-x-1 touch-ripple">
+          <i data-lucide="globe" class="w-3 h-3 text-indigo-500"></i>
+          <span id="langToggleText">O'Z</span>
+        </button>
+
+        <!-- 3. Quick Theme Toggle Button -->
+        <button onclick="quickToggleTheme()" id="headerThemeBtn" class="p-1.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition flex items-center justify-center touch-ripple shadow-sm" aria-label="Mavzu" title="Mavzu">
+          <i data-lucide="sun-moon" id="themeIcon" class="w-4 h-4 sm:w-4.5 sm:h-4.5 text-indigo-600 dark:text-indigo-400"></i>
+        </button>
+
+        <!-- 4. Hamburger Menu Button -->
+        <button onclick="toggleDrawerMenu(true)" id="headerMenuBtn" class="p-1.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition flex items-center justify-center touch-ripple shadow-sm" aria-label="Menyu" title="Menyu">
+          <i data-lucide="menu" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MOBILE DRAWER MENU & BACKDROP OVERLAY -->
+  <div id="drawerMenuOverlay" class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300" onclick="toggleDrawerMenu(false)"></div>
+
+  <div id="drawerMenuPanel" class="hidden fixed top-0 right-0 bottom-0 w-80 max-w-[85vw] z-50 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between translate-x-full transition-transform duration-300 ease-out overflow-y-auto">
+    <!-- Drawer Header -->
+    <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+      <div class="flex items-center space-x-2.5">
+        <div class="w-8 h-8 rounded-xl insta-gradient flex items-center justify-center text-white shadow-md">
+          <i data-lucide="shield-check" class="w-4 h-4"></i>
+        </div>
+        <div>
+          <h3 class="font-black text-sm text-slate-900 dark:text-white">InstaSafe Menyu</h3>
+          <p class="text-[10px] text-slate-500 dark:text-slate-400">Multi-Platform Scanner</p>
+        </div>
+      </div>
+      <button onclick="toggleDrawerMenu(false)" class="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition" aria-label="Yopish">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <!-- Drawer Navigation Items -->
+    <div class="p-4 space-y-2 flex-1">
+      <!-- 1. Tekshirish / Check -->
+      <button onclick="switchTabFromDrawer('check')" class="w-full p-3 rounded-2xl flex items-center space-x-3 text-left transition hover:bg-slate-100 dark:hover:bg-slate-800 group">
+        <span class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+          <i data-lucide="check-circle" class="w-4 h-4"></i>
+        </span>
+        <div class="flex-1">
+          <p class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white" id="drawerNavCheckText">Kanallarni tekshirish</p>
+          <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400" id="drawerNavCheckDesc">Skrinshot, havola yoki fayl orqali</p>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
+      </button>
+
+      <!-- 2. Reyestr / Registry -->
+      <button onclick="switchTabFromDrawer('registry')" class="w-full p-3 rounded-2xl flex items-center space-x-3 text-left transition hover:bg-slate-100 dark:hover:bg-slate-800 group">
+        <span class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+          <i data-lucide="book-open" class="w-4 h-4"></i>
+        </span>
+        <div class="flex-1">
+          <p class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white" id="drawerNavRegistryText">Sud reyestri (1560+)</p>
+          <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400" id="drawerNavRegistryDesc">Taqiqlangan manbalar to'liq ro'yxati</p>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
+      </button>
+
+      <!-- 3. Qo'llanma / Tutorial GIF -->
+      <button onclick="openTutorialFromDrawer()" class="w-full p-3 rounded-2xl flex items-center space-x-3 text-left transition hover:bg-slate-100 dark:hover:bg-slate-800 group">
+        <span class="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+          <i data-lucide="play-circle" class="w-4 h-4"></i>
+        </span>
+        <div class="flex-1">
+          <p class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white" id="drawerNavGuideText">Qanday ishlatiladi? (GIF)</p>
+          <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400" id="drawerNavGuideDesc">Ko'rgazmali video-qo'llanma</p>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
+      </button>
+
+      <!-- 4. Qonuniy ma'lumot (JK 244-1) -->
+      <button onclick="scrollToLegalFromDrawer()" class="w-full p-3 rounded-2xl flex items-center space-x-3 text-left transition hover:bg-slate-100 dark:hover:bg-slate-800 group">
+        <span class="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+          <i data-lucide="shield-alert" class="w-4 h-4"></i>
+        </span>
+        <div class="flex-1">
+          <p class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white" id="drawerNavLegalText">JK 244-1-moddasi haqida</p>
+          <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400" id="drawerNavLegalDesc">Yuridik javobgarlik va ma'lumot</p>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
+      </button>
+
+      <!-- 5. To'lov / Paketlar -->
+      <button onclick="openPaymentFromDrawer()" class="w-full p-3 rounded-2xl flex items-center space-x-3 text-left transition bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-200/70 dark:border-indigo-800/70 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/60 group">
+        <span class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+        </span>
+        <div class="flex-1">
+          <p class="text-xs sm:text-sm font-extrabold text-indigo-950 dark:text-indigo-200" id="drawerNavPayText">Tekshiruv paketlari</p>
+          <p class="text-[10px] sm:text-[11px] text-indigo-700/80 dark:text-indigo-400" id="drawerNavPayDesc">Click va Payme orqali to'ldirish</p>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-indigo-500 group-hover:translate-x-0.5 transition-transform"></i>
+      </button>
+
+      <!-- Separator -->
+      <div class="my-2 border-t border-slate-100 dark:border-slate-800"></div>
+
+      <!-- 6. Automatic / Light / Dark Mode Controls in Drawer -->
+      <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2.5">
+            <span class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+              <i data-lucide="palette" class="w-4 h-4"></i>
+            </span>
+            <div>
+              <p class="text-xs font-extrabold text-slate-900 dark:text-white" id="drawerThemeTitle">Mavzu va Ko'rinish</p>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400" id="drawerThemeDesc">Tizim sozlamasiga moslashadi (Avto)</p>
+            </div>
+          </div>
+          <span id="drawerCurrentThemeBadge" class="text-[10px] font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+            Avto
+          </span>
+        </div>
+
+        <!-- 3-Segmented Theme Mode Selector: Auto, Light, Dark -->
+        <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-200/70 dark:bg-slate-900/80 rounded-xl text-center text-xs font-bold">
+          <button type="button" onclick="setThemeMode('auto')" id="themeBtn_auto" class="py-1.5 px-2 rounded-lg transition-all flex items-center justify-center space-x-1 touch-ripple">
+            <i data-lucide="sun-moon" class="w-3.5 h-3.5"></i>
+            <span id="themeModeAutoText">Avto</span>
+          </button>
+          <button type="button" onclick="setThemeMode('light')" id="themeBtn_light" class="py-1.5 px-2 rounded-lg transition-all flex items-center justify-center space-x-1 touch-ripple">
+            <i data-lucide="sun" class="w-3.5 h-3.5"></i>
+            <span id="themeModeLightText">Yorug'</span>
+          </button>
+          <button type="button" onclick="setThemeMode('dark')" id="themeBtn_dark" class="py-1.5 px-2 rounded-lg transition-all flex items-center justify-center space-x-1 touch-ripple">
+            <i data-lucide="moon" class="w-3.5 h-3.5"></i>
+            <span id="themeModeDarkText">Tungi</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Drawer Footer -->
+    <div class="p-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+      <button onclick="shareToTelegram(); toggleDrawerMenu(false);" class="w-full py-2.5 px-3 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-extrabold text-xs flex items-center justify-center space-x-2 shadow transition touch-ripple">
+        <i data-lucide="send" class="w-3.5 h-3.5"></i>
+        <span id="drawerShareText">Telegram'da ulashish</span>
+      </button>
+      <p class="text-center text-[10px] text-slate-400 dark:text-slate-500">© 2026 InstaSafe UZ • Oliy sud reyestri</p>
+    </div>
+  </div>
+
+  <!-- Main Content Container -->
+  <main class="relative z-10 flex-1 max-w-2xl w-full mx-auto px-3.5 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+
+    <!-- TAB 1: CHECK TAB -->
+    <div id="tabCheck" class="space-y-4 sm:space-y-6">
+
+      <!-- Hero Banner -->
+      <div class="text-center space-y-1.5 pt-1 sm:pt-2">
+        <h1 class="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-snug" id="heroTitle">
+          Kanallaringizni <span class="hero-text-gradient">taqiqlangan ro'yxatga</span> tekshiring
+        </h1>
+        <p class="text-slate-600 max-w-md mx-auto text-[11px] sm:text-xs leading-relaxed" id="heroSubtitle">
+          O'zbekiston Respublikasi Oliy sudi tomonidan taqiqlangan 1 560+ ta rasmiy ekstremistik manbalar (Telegram, YouTube, Instagram, Facebook).
+        </p>
+      </div>
+
+      <!-- Platform Selection Scrollable Carousel / List (Mobile-First Swipeable Rail) -->
+      <div class="relative">
+        <div class="bg-slate-200/80 dark:bg-slate-900/90 p-1.5 rounded-2xl flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth backdrop-blur-md border border-slate-300/50 dark:border-slate-800 touch-pan-x" id="platformSelector" style="-webkit-overflow-scrolling: touch; scroll-snap-type: x proximity;">
+          <button type="button" onclick="selectPlatform('telegram')" id="platBtnTelegram" class="plat-active-telegram touch-ripple shrink-0 py-2 sm:py-2.5 px-3.5 sm:px-4 rounded-xl font-black text-xs sm:text-sm transition-all duration-200 flex items-center space-x-2 whitespace-nowrap shadow-sm" style="scroll-snap-align: start;">
+            <svg class="w-4 h-4 shrink-0 transition-transform duration-200" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+            </svg>
+            <span>Telegram</span>
+          </button>
+          <button type="button" onclick="selectPlatform('youtube')" id="platBtnYoutube" class="plat-inactive touch-ripple shrink-0 py-2 sm:py-2.5 px-3.5 sm:px-4 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center space-x-2 whitespace-nowrap shadow-sm" style="scroll-snap-align: start;">
+            <svg class="w-4 h-4 shrink-0 transition-transform duration-200" viewBox="0 0 24 24" fill="currentColor">
+              <path fill-rule="evenodd" d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+            <span>YouTube</span>
+          </button>
+          <button type="button" onclick="selectPlatform('instagram')" id="platBtnInstagram" class="plat-inactive touch-ripple shrink-0 py-2 sm:py-2.5 px-3.5 sm:px-4 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center space-x-2 whitespace-nowrap shadow-sm" style="scroll-snap-align: start;">
+            <svg class="w-4 h-4 shrink-0 transition-transform duration-200" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+            </svg>
+            <span>Instagram</span>
+          </button>
+          <button type="button" onclick="selectPlatform('facebook')" id="platBtnFacebook" class="plat-inactive touch-ripple shrink-0 py-2 sm:py-2.5 px-3.5 sm:px-4 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center space-x-2 whitespace-nowrap shadow-sm" style="scroll-snap-align: start;">
+            <svg class="w-4 h-4 shrink-0 transition-transform duration-200" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+            <span>Facebook</span>
+          </button>
+          <button type="button" onclick="selectPlatform('tiktok')" id="platBtnTiktok" class="plat-inactive touch-ripple shrink-0 py-2 sm:py-2.5 px-3.5 sm:px-4 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center space-x-2 whitespace-nowrap shadow-sm" style="scroll-snap-align: start;">
+            <svg class="w-4 h-4 shrink-0 transition-transform duration-200" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.24 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
+            </svg>
+            <span>TikTok</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- DYNAMIC PLATFORM ACTION CARD (Explains chosen platform & what to do next) -->
+      <div id="platformActionCard" class="tilt-3d shimmer-card shadow-lg shadow-indigo-500/10 transition-all duration-300" data-tilt-max="7" data-tilt-scale="1.015">
+        <div class="shimmer-inner p-3.5 sm:p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+              <span id="platActionIconBadge" class="w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-md text-xs font-black bg-gradient-to-r from-sky-400 to-blue-600 shadow-sky-500/30 shrink-0">
+                <i data-lucide="send" class="w-4 h-4"></i>
+              </span>
+              <div>
+                <div class="flex items-center space-x-1.5">
+                  <span id="platActionTitle" class="text-xs sm:text-sm font-black text-slate-900 dark:text-white">Tanlandi: Telegram</span>
+                  <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                </div>
+                <p id="platActionSubtitle" class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">Tekshirish uchun qulay usulni tanlang</p>
+              </div>
+            </div>
+            <button type="button" onclick="openTutorialModal(selectedPlatform)" id="platActionGuideBtn" class="px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-extrabold bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200/80 dark:border-indigo-800/80 flex items-center space-x-1 transition touch-ripple shadow-sm shrink-0">
+              <span>📖 Qo'llanma (GIF)</span>
+            </button>
+          </div>
+
+          <!-- Dynamic What to do recommendations / Clickable Mode Shortcuts -->
+          <div id="platActionSteps" class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] sm:text-xs">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Check Mode Selector (Screenshot AI vs Single Quick Check vs File Batch Check) -->
+      <div class="bg-slate-200/80 dark:bg-slate-900/90 p-1.5 rounded-2xl flex items-center space-x-1 text-xs shadow-inner backdrop-blur-md border border-slate-300/50 dark:border-slate-800">
+        <button onclick="setCheckMode('screenshot')" id="modeBtnScreenshot" class="flex-1 py-2 sm:py-2.5 rounded-xl font-black bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-md shadow-indigo-500/10 flex items-center justify-center space-x-1.5 transition-all duration-200 touch-ripple border border-indigo-200/80 dark:border-indigo-500/40 ring-1 ring-indigo-500/20">
+          <i data-lucide="camera" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+          <span id="modeBtnScreenshotText">Skrinshot (AI)</span>
+        </button>
+        <button onclick="setCheckMode('single')" id="modeBtnSingle" class="flex-1 py-2 sm:py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-1.5 transition-all duration-200 touch-ripple border border-transparent">
+          <i data-lucide="search" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+          <span id="modeBtnSingleText">Kanal / Link</span>
+        </button>
+        <button onclick="setCheckMode('file')" id="modeBtnFile" class="flex-1 py-2 sm:py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-1.5 transition-all duration-200 touch-ripple border border-transparent">
+          <i data-lucide="file-up" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+          <span id="modeBtnFileText">Fayl eksport</span>
+        </button>
+      </div>
+
+      <!-- PANEL 0: SCREENSHOT CHECK (Default, zero friction) -->
+      <div id="panelScreenshot" class="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-lg shadow-slate-200/50 space-y-4">
+        <div class="flex items-center justify-between gap-2">
+          <div class="min-w-0 flex-1">
+            <h2 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white truncate" id="screenshotCardTitle">Skrinshot orqali tekshirish</h2>
+            <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5" id="screenshotCardDesc">Obunalaringizni skrinshot qilib tashlang, AI 2 soniyada tekshiradi.</p>
+          </div>
+          <span id="screenshotPlatformBadge" class="text-[10px] sm:text-xs font-extrabold px-2.5 py-1 rounded-full flex items-center space-x-1.5 transition-all shadow-sm shrink-0">
+            <span id="screenshotPlatformBadgeIcon" class="w-3.5 h-3.5 flex items-center justify-center shrink-0"></span>
+            <span id="screenshotPlatformBadgeText">Выбрано: Telegram</span>
+          </span>
+        </div>
+
+        <!-- Screenshot Upload Drop Zone -->
+        <div
+          id="screenshotDropZone"
+          onclick="document.getElementById('screenshotInput').click()"
+          class="border-2 border-dashed border-indigo-300 hover:border-indigo-600 bg-indigo-50/30 hover:bg-indigo-50/70 rounded-2xl sm:rounded-3xl p-6 sm:p-8 text-center cursor-pointer transition flex flex-col items-center justify-center space-y-3"
+        >
+          <div id="screenshotPreviewWrapper" class="hidden relative max-h-48 overflow-hidden rounded-xl border border-indigo-200 shadow-sm">
+            <img id="screenshotPreviewImg" src="" alt="Screenshot" class="max-h-48 object-contain">
+            <button type="button" onclick="clearScreenshotPreview(event)" class="absolute top-2 right-2 bg-slate-900/80 hover:bg-slate-900 text-white rounded-full p-1 text-xs shadow-md transition" title="Tozalash / Очистить">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
+          <div id="screenshotIconBox" class="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/30">
+            <i data-lucide="camera" class="w-7 h-7"></i>
+          </div>
+          <div>
+            <p class="text-xs sm:text-sm font-bold text-slate-800" id="screenshotDropText">Skrinshotni tanlang yoki shu yerga tashlang</p>
+            <p class="text-[10px] sm:text-[11px] text-slate-500 mt-0.5">PNG, JPG, WEBP • Yoki Ctrl+V orqali bu yerga joylang</p>
+          </div>
+          <span class="inline-block px-4 py-2 rounded-xl text-xs font-extrabold insta-gradient text-white shadow-md">
+            📸 Skrinshot yuklash / Rasmga olish
+          </span>
+          <input type="file" id="screenshotInput" class="hidden" accept="image/*" onchange="handleScreenshotUpload(event)">
+        </div>
+
+        <div class="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-3 text-[11px] text-indigo-950 flex items-start space-x-2">
+          <i data-lucide="sparkles" class="w-4 h-4 text-indigo-600 shrink-0 mt-0.5"></i>
+          <p id="screenshotTipText" class="leading-relaxed">
+            <b>Eng qulay usul:</b> Telegram yoki Instagram'da kanallaringiz ro'yxatini ochib bitta skrinshot qiling. Bizning AI barcha nomlarni 2 soniyada o'qib, sud qarorlari bilan tekshirib beradi!
+          </p>
+        </div>
+      </div>
+
+      <!-- PANEL 1: SINGLE QUICK CHECK -->
+      <div id="panelSingle" class="hidden glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-lg shadow-slate-200/50 space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-extrabold text-slate-900 dark:text-white" id="singleCardTitle">Kanal yoki sahifani tekshirish</span>
+          <span id="selectedPlatformBadge" class="text-[10px] font-extrabold px-2.5 py-1 rounded-full flex items-center space-x-1.5 transition-all shadow-sm">
+            <span id="selectedPlatformBadgeIcon" class="w-3.5 h-3.5 flex items-center justify-center shrink-0"></span>
+            <span id="selectedPlatformBadgeText">Выбрано: Telegram</span>
+          </span>
+        </div>
+
+        <form onsubmit="handleSingleCheck(event)" class="space-y-3.5">
+          <div class="relative">
+            <input
+              type="text"
+              id="singleQueryInput"
+              placeholder="@kanal_nomi, t.me/havola yoki kanal nomi"
+              class="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/10 text-slate-900 font-bold outline-none transition text-xs sm:text-sm"
+              required
+            >
+          </div>
+
+          <!-- Quick Samples (Horizontal Scroll Rail) -->
+          <div class="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1 text-xs" id="singleQuickSamples" style="-webkit-overflow-scrolling: touch;">
+            <span class="text-slate-500 font-medium shrink-0" id="quickSamplesLabel">Tezkor sinov:</span>
+            <button type="button" onclick="runQuickSample('Abdulloh Zufar', selectedPlatform)" class="px-2.5 py-1 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 font-semibold transition flex items-center space-x-1">
+              <span>🚨 Abdulloh Zufar (taqiqlangan)</span>
+            </button>
+            <button type="button" onclick="runQuickSample('Kun.uz', selectedPlatform)" class="px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 font-semibold transition flex items-center space-x-1">
+              <span>✅ Kun.uz (xavfsiz)</span>
+            </button>
+            <button type="button" onclick="runQuickSample('A\'ashiqul jannah', selectedPlatform)" class="px-2.5 py-1 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 font-semibold transition flex items-center space-x-1">
+              <span>🚨 A'ashiqul jannah</span>
+            </button>
+          </div>
+
+          <button
+            type="submit"
+            id="singleCheckBtn"
+            class="w-full py-3 rounded-2xl insta-gradient text-white font-extrabold text-xs sm:text-sm shadow-md shadow-indigo-500/25 hover:opacity-95 transition flex items-center justify-center space-x-1.5"
+          >
+            <i data-lucide="shield-alert" class="w-4 h-4"></i>
+            <span id="singleCheckBtnText">Oliy sud bazasidan tekshirish</span>
+          </button>
+        </form>
+
+        <div class="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-3 text-[11px] text-indigo-950 flex items-start space-x-2">
+          <i data-lucide="info" class="w-3.5 h-3.5 text-indigo-600 shrink-0 mt-0.5"></i>
+          <p id="singleTipText" class="leading-relaxed">
+            <b>Maslahat:</b> Telegram botimizda shubhali kanaldan xabarni to'g'ridan-to'g'ri forward qilib ham bir zumda tekshirishingiz mumkin!
+          </p>
+        </div>
+      </div>
+
+      <!-- PANEL 2: FILE BATCH CHECK -->
+      <div id="panelFile" class="hidden glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-lg shadow-slate-200/50 space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white" id="fileCardTitle">Fayl orqali barcha obunalarni tekshirish</h2>
+            <p class="text-xs text-slate-500 mt-1" id="fileCardDesc">
+              Telegram (<code>result.json</code>), YouTube (<code>subscriptions.csv</code>) yoki Instagram (<code>following.json</code>).
+            </p>
+          </div>
+          <span id="filePlatformBadge" class="text-[10px] font-extrabold px-2.5 py-1 rounded-full flex items-center space-x-1.5 transition-all shadow-sm">
+            <span id="filePlatformBadgeIcon" class="w-3.5 h-3.5 flex items-center justify-center shrink-0"></span>
+            <span id="filePlatformBadgeText">Выбрано: Telegram</span>
+          </span>
+        </div>
+
+        <!-- Drag & Drop Zone -->
+        <div
+          id="dropZone"
+          onclick="document.getElementById('fileInput').click()"
+          class="border-2 border-dashed border-slate-300 hover:border-indigo-500 bg-slate-50/80 hover:bg-indigo-50/40 rounded-2xl sm:rounded-3xl p-6 sm:p-8 text-center cursor-pointer transition flex flex-col items-center justify-center space-y-2.5"
+        >
+          <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-sm">
+            <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <p class="text-xs sm:text-sm font-bold text-slate-800" id="dropMainText">Faylni shu yerga tashlang yoki tanlang</p>
+            <p class="text-[10px] sm:text-[11px] text-slate-500 mt-0.5">.json (Telegram / Instagram) yoki .csv (YouTube)</p>
+          </div>
+          <span class="inline-block px-3 py-1 rounded-full text-[10px] font-extrabold bg-indigo-600 text-white shadow">
+            Fayl tanlash
+          </span>
+          <input type="file" id="fileInput" class="hidden" accept=".json,.csv,.txt" onchange="handleFileUpload(event)">
+        </div>
+
+        <!-- Step-by-Step Tutorial Box -->
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-3.5 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-extrabold text-xs text-slate-800" id="guideTitle">Eksport faylini olish bo'yicha qo'llanma:</span>
+            <button onclick="openTutorialModal(selectedPlatform)" class="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center space-x-0.5 transition">
+              <span id="guideDetailBtnText">Batafsil (GIF)</span>
+              <i data-lucide="chevron-right" class="w-3 h-3"></i>
+            </button>
+          </div>
+          <div id="guideList" class="space-y-1 text-slate-600 text-[10px] sm:text-[11px] leading-relaxed">
+            <!-- Dynamically populated based on active platform! -->
+          </div>
+        </div>
+      </div>
+
+      <!-- LOADING STATE -->
+      <div id="loadingBox" class="hidden glass-card rounded-3xl p-6 sm:p-8 text-center space-y-4">
+        <div class="w-12 h-12 mx-auto rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin"></div>
+        <div>
+          <h3 id="loadingTitle" class="font-extrabold text-slate-900 text-base">Tekshirilmoqda...</h3>
+          <p id="loadingSubtitle" class="text-xs text-slate-500 mt-1">Oliy sudning 1560+ ta rasmiy qarorlari bilan solishtirilmoqda</p>
+        </div>
+        <div class="w-full max-w-md mx-auto bg-slate-100 rounded-full h-3 overflow-hidden p-0.5 border border-slate-200">
+          <div id="loadingProgressBar" class="h-full bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 rounded-full transition-all duration-300 w-1/4"></div>
+        </div>
+        <div class="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-3.5 text-xs text-indigo-950 max-w-md mx-auto flex items-start space-x-2 text-left">
+          <i data-lucide="shield-check" class="w-4 h-4 text-indigo-600 shrink-0 mt-0.5"></i>
+          <p id="loadingTip" class="leading-relaxed">
+            <b>Xavfsizlik kafolati:</b> Biz hech qanday shaxsiy ma'lumot yoki parollarni saqlamaymiz. Tekshiruv rasmiy sud reyestri bo'yicha amalga oshadi.
+          </p>
+        </div>
+      </div>
+
+      <!-- RESULTS CONTAINER -->
+      <div id="resultsContainer" class="hidden space-y-6"></div>
+
+    </div>
+
+    <!-- TAB 2: REGISTRY -->
+    <div id="tabRegistry" class="hidden space-y-4">
+      <div class="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-lg shadow-slate-200/50 space-y-4">
+        
+        <div>
+          <div class="flex items-center space-x-2">
+            <h2 class="text-base sm:text-lg font-black text-slate-900">Oliy sud taqiqlangan manbalar reyestri</h2>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-700">1 562 ta</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5">O'zbekiston Respublikasi Oliy sudi qarorlari asosida rasmiy ro'yxat (2026 y.).</p>
+        </div>
+
+        <!-- Registry Platform Filter Tabs -->
+        <div class="flex flex-wrap gap-1.5" id="registryFilterBar">
+          <button onclick="filterRegistryPlatform('all')" id="rfBtn_all" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-sm flex items-center space-x-1.5">
+            <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+            <span>Barchasi (1562)</span>
+          </button>
+          <button onclick="filterRegistryPlatform('telegram')" id="rfBtn_telegram" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center space-x-1.5">
+            <svg class="w-3.5 h-3.5 text-sky-500 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+            </svg>
+            <span>Telegram (790)</span>
+          </button>
+          <button onclick="filterRegistryPlatform('youtube')" id="rfBtn_youtube" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center space-x-1.5">
+            <svg class="w-3.5 h-3.5 text-red-600 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+            <span>YouTube (167)</span>
+          </button>
+          <button onclick="filterRegistryPlatform('instagram')" id="rfBtn_instagram" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center space-x-1.5">
+            <svg class="w-3.5 h-3.5 text-pink-600 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+            </svg>
+            <span>Instagram (267)</span>
+          </button>
+          <button onclick="filterRegistryPlatform('facebook')" id="rfBtn_facebook" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center space-x-1.5">
+            <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+            <span>Facebook (249)</span>
+          </button>
+          <button onclick="filterRegistryPlatform('tiktok')" id="rfBtn_tiktok" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center space-x-1.5">
+            <svg class="w-3.5 h-3.5 text-slate-800 dark:text-cyan-400 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.24 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
+            </svg>
+            <span>TikTok (53)</span>
+          </button>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="relative">
+          <input
+            type="text"
+            id="registrySearchInput"
+            oninput="filterRegistry()"
+            placeholder="Kanal nomi yoki username bo'yicha qidiruv..."
+            class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold focus:outline-none focus:border-indigo-600"
+          >
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+        </div>
+
+        <!-- Registry Table -->
+        <div class="overflow-x-auto max-h-[500px] overflow-y-auto rounded-xl border border-slate-200">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-100 text-slate-600 sticky top-0 uppercase text-[10px] font-bold">
+              <tr>
+                <th class="p-2.5">№</th>
+                <th class="p-2.5">Platforma</th>
+                <th class="p-2.5">Nomi / Username</th>
+                <th class="p-2.5">Sud qaroridagi yozuv</th>
+              </tr>
+            </thead>
+            <tbody id="registryTableBody" class="divide-y divide-slate-100 font-medium">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SECTION 3: LEGAL & SAFETY ACCORDION -->
+    <div id="legalSafetyCard" class="tilt-3d glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-lg shadow-slate-200/50 space-y-3.5" data-tilt-max="7" data-tilt-scale="1.01">
+      <div class="tilt-parallax-sm flex items-center space-x-2.5">
+        <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold shadow-sm">
+          <i data-lucide="scale" class="w-4 h-4"></i>
+        </div>
+        <div>
+          <h3 class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white" id="legalCardTitle">Qonuniy xavfsizlik va JK 244-1-moddasi haqida</h3>
+          <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">O'zbekiston Respublikasi qonunchiligi bo'yicha ma'lumot</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-[11px] leading-relaxed">
+        <div class="tilt-3d tilt-parallax-sm p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 space-y-1 shadow-sm hover:border-indigo-400 dark:hover:border-indigo-500/80 transition-colors" data-tilt-max="12" data-tilt-scale="1.025">
+          <p class="font-extrabold text-slate-900 dark:text-white flex items-center space-x-1.5">
+            <i data-lucide="alert-octagon" class="w-3.5 h-3.5 text-rose-600"></i>
+            <span>JK 244-1-moddasi nima?</span>
+          </p>
+          <p class="text-slate-600 dark:text-slate-400" id="legalTxt1">
+            Ekstremistik, terroristik yoki qonun bilan taqiqlangan materiallarni tayyorlash, saqlash yoki tarqatish qonun bo'yicha javobgarlikka sabab bo'ladi.
+          </p>
+        </div>
+
+        <div class="tilt-3d tilt-parallax-sm p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 space-y-1 shadow-sm hover:border-indigo-400 dark:hover:border-indigo-500/80 transition-colors" data-tilt-max="12" data-tilt-scale="1.025">
+          <p class="font-extrabold text-slate-900 dark:text-white flex items-center space-x-1.5">
+            <i data-lucide="plane" class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400"></i>
+            <span>Aeroport va tekshiruvlar:</span>
+          </p>
+          <p class="text-slate-600 dark:text-slate-400" id="legalTxt2">
+            Chet elga chiqish yoki qaytishda bojxona va aeroport nazoratida telefoningizdagi shubhali kanallar tekshirilishi mumkin. Oldindan tozalab qo'yish xotirjamlik beradi.
+          </p>
+        </div>
+
+        <div class="tilt-3d tilt-parallax-sm p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 space-y-1 shadow-sm hover:border-indigo-400 dark:hover:border-indigo-500/80 transition-colors" data-tilt-max="12" data-tilt-scale="1.025">
+          <p class="font-extrabold text-slate-900 dark:text-white flex items-center space-x-1.5">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
+            <span>100% Anonimlik kafolati:</span>
+          </p>
+          <p class="text-slate-600 dark:text-slate-400" id="legalTxt3">
+            InstaSafe hech qanday shaxsiy yozishmalaringizni, rasmlaringizni yoki parollaringizni saqlamaydi. Faqat kanal nomlari sud bazasi bilan solishtiriladi.
+          </p>
+        </div>
+
+        <div class="tilt-3d tilt-parallax-sm p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 space-y-1 shadow-sm hover:border-indigo-400 dark:hover:border-indigo-500/80 transition-colors" data-tilt-max="12" data-tilt-scale="1.025">
+          <p class="font-extrabold text-slate-900 dark:text-white flex items-center space-x-1.5">
+            <i data-lucide="smartphone" class="w-3.5 h-3.5 text-teal-600 dark:text-teal-400"></i>
+            <span>B/U telefon olganda:</span>
+          </p>
+          <p class="text-slate-600 dark:text-slate-400" id="legalTxt4">
+            Eski egasidan qolgan kanallarni 1 daqiqada aniqlab, nomingizga tushishi mumkin bo'lgan har qanday xavfning oldini oling.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: VIRAL SHARE CARD -->
+    <div id="viralShareCard" class="tilt-3d relative z-20 isolate overflow-hidden rounded-2xl sm:rounded-3xl p-4 sm:p-5 bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white shadow-xl space-y-3 border border-indigo-700/40" data-tilt-max="7" data-tilt-scale="1.015">
+      <div class="relative z-10 flex items-center justify-between">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white backdrop-blur">
+            <i data-lucide="users" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+          </div>
+          <div>
+            <h4 class="text-xs sm:text-sm font-black" id="shareCardTitle">Yaqinlaringizni ham xavfdan ogohlantiring</h4>
+            <p class="text-[10px] sm:text-[11px] text-indigo-200" id="shareCardDesc">Do'stlaringiz va oilangizga bepul tekshiruv havolasini yuboring</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="relative z-10 flex flex-col sm:flex-row items-center gap-2 pt-1">
+        <button onclick="shareToTelegram()" class="w-full sm:flex-1 py-2.5 px-3 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-extrabold text-xs flex items-center justify-center space-x-1.5 shadow transition">
+          <i data-lucide="send" class="w-3.5 h-3.5"></i>
+          <span id="shareTgBtnText">Telegram'da do'stlarga ulashish</span>
+        </button>
+        <button onclick="copyShareLink()" class="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition flex items-center justify-center space-x-1">
+          <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+          <span id="copyLinkBtnText">Nusxalash</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="relative z-10 text-center text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 space-y-2 pt-2 px-2 max-w-full overflow-hidden">
+      <p class="leading-relaxed">© 2026 InstaSafe UZ • O‘zbekiston Respublikasi Oliy sudi rasmiy reyestri <span class="whitespace-nowrap">(1&nbsp;562 ta qaror)</span></p>
+      <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-slate-500 dark:text-slate-400 font-medium text-[10px] sm:text-[11px]">
+        <span class="inline-flex items-center space-x-1 whitespace-nowrap shrink-0">
+          <i data-lucide="lock" class="w-3.5 h-3.5 text-emerald-500 shrink-0"></i>
+          <span>256-bit SSL</span>
+        </span>
+        <span class="text-slate-300 dark:text-slate-600 select-none">•</span>
+        <span class="whitespace-nowrap shrink-0">Click &amp; Payme integratsiyasi</span>
+        <span class="text-slate-300 dark:text-slate-600 select-none">•</span>
+        <span class="whitespace-nowrap shrink-0">Telegram WebApp 2.0</span>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- PAYMENT MODAL -->
+  <div id="paymentModal" onclick="if (event.target === this) closePaymentModal()" class="hidden modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+    <div id="paymentModalDialog" class="modal-card bg-white dark:bg-slate-900 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 border border-slate-100 dark:border-slate-800">
+      
+      <div class="text-center space-y-1">
+        <div class="w-12 h-12 mx-auto rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shadow-sm">
+          <i data-lucide="sparkles" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-xl font-black text-slate-900">Tekshiruvlarni to'ldirish</h3>
+        <p class="text-xs text-slate-500">Istalgan paketni tanlang va xavfsiz to'lovni amalga oshiring</p>
+      </div>
+
+      <!-- Packages -->
+      <div class="space-y-2.5">
+        <label class="block cursor-pointer">
+          <input type="radio" name="plan" value="single" checked class="peer hidden">
+          <div class="p-3.5 rounded-2xl border-2 border-slate-200 peer-checked:border-indigo-600 peer-checked:bg-indigo-50/40 transition flex items-center justify-between">
+            <div>
+              <p class="font-extrabold text-sm text-slate-900">1 ta tekshiruv</p>
+              <p class="text-[11px] text-slate-500">Bir martalik to'liq hisobot</p>
+            </div>
+            <div class="text-right">
+              <span class="font-black text-base text-slate-900">10 000</span>
+              <span class="text-[10px] font-bold text-slate-500">so'm</span>
+            </div>
+          </div>
+        </label>
+
+        <label class="block cursor-pointer">
+          <input type="radio" name="plan" value="pack3" class="peer hidden">
+          <div class="p-3.5 rounded-2xl border-2 border-slate-200 peer-checked:border-indigo-600 peer-checked:bg-indigo-50/40 transition flex items-center justify-between relative">
+            <span class="absolute -top-2 right-4 px-2 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white uppercase tracking-wider">Foydali</span>
+            <div>
+              <p class="font-extrabold text-sm text-slate-900">3 ta tekshiruv</p>
+              <p class="text-[11px] text-slate-500">Oila va do'stlar uchun</p>
+            </div>
+            <div class="text-right">
+              <span class="font-black text-base text-indigo-600">25 000</span>
+              <span class="text-[10px] font-bold text-slate-500">so'm</span>
+            </div>
+          </div>
+        </label>
+
+        <label class="block cursor-pointer">
+          <input type="radio" name="plan" value="unlimited" class="peer hidden">
+          <div class="p-3.5 rounded-2xl border-2 border-slate-200 peer-checked:border-indigo-600 peer-checked:bg-indigo-50/40 transition flex items-center justify-between">
+            <div>
+              <p class="font-extrabold text-sm text-slate-900">Oylik cheksiz</p>
+              <p class="text-[11px] text-slate-500">30 kun davomida istalgancha</p>
+            </div>
+            <div class="text-right">
+              <span class="font-black text-base text-slate-900">49 000</span>
+              <span class="text-[10px] font-bold text-slate-500">so'm</span>
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <!-- Payment Provider Buttons -->
+      <div class="space-y-2 pt-1">
+        <button onclick="handlePaymentCheckout('click')" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow flex items-center justify-center space-x-2 transition touch-ripple">
+          <span>📲 CLICK orqali to'lash</span>
+        </button>
+        <button onclick="handlePaymentCheckout('payme')" class="w-full py-3 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-extrabold text-xs shadow flex items-center justify-center space-x-2 transition touch-ripple">
+          <span>📲 PAYME orqali to'lash</span>
+        </button>
+        <button onclick="handleDemoFreePayment()" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] transition touch-ripple">
+          ✅ Test to'lovi (Demo sinov)
+        </button>
+      </div>
+
+      <button onclick="closePaymentModal()" class="w-full text-center text-xs font-semibold text-slate-400 hover:text-slate-600 py-1 transition">
+        Bekor qilish
+      </button>
+
+    </div>
+  </div>
+
+  <!-- TUTORIAL MODAL (Multi-Platform & Mobile/Desktop with Interactive CSS Smartphone Simulator) -->
+  <div id="tutorialModal" onclick="if (event.target === this) closeTutorialModal()" class="hidden modal-overlay fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+    <div id="tutorialModalDialog" class="modal-card bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full p-3.5 sm:p-6 shadow-2xl space-y-3.5 border border-slate-100 dark:border-slate-800 my-auto max-h-[95vh] overflow-y-auto">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
+            <i data-lucide="help-circle" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-white" id="tutModalTitle">Faylni olish bo'yicha ko'rsatma</h3>
+            <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400" id="tutModalSubtitle">Interaktiv jonli simulyatsiya va qadamlar</p>
+          </div>
+        </div>
+        <button onclick="closeTutorialModal()" class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-white flex items-center justify-center transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Platform Selection Tabs inside Modal (5 Platforms!) -->
+      <div class="bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-2xl flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth text-xs font-bold" id="tutPlatformTabs" style="-webkit-overflow-scrolling: touch;">
+        <button onclick="switchTutorialPlatform('telegram')" id="tutTab_telegram" class="shrink-0 py-1.5 px-3 rounded-xl transition flex items-center justify-center space-x-1.5 bg-white text-indigo-700 shadow-sm dark:bg-slate-700 dark:text-white whitespace-nowrap">
+          <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+          </svg>
+          <span>Telegram</span>
+        </button>
+        <button onclick="switchTutorialPlatform('youtube')" id="tutTab_youtube" class="shrink-0 py-1.5 px-3 rounded-xl transition flex items-center justify-center space-x-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 whitespace-nowrap">
+          <svg class="w-3.5 h-3.5 shrink-0 text-red-600" viewBox="0 0 24 24" fill="currentColor">
+            <path fill-rule="evenodd" d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+          </svg>
+          <span>YouTube</span>
+        </button>
+        <button onclick="switchTutorialPlatform('instagram')" id="tutTab_instagram" class="shrink-0 py-1.5 px-3 rounded-xl transition flex items-center justify-center space-x-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 whitespace-nowrap">
+          <svg class="w-3.5 h-3.5 shrink-0 text-pink-600" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+          </svg>
+          <span>Instagram</span>
+        </button>
+        <button onclick="switchTutorialPlatform('facebook')" id="tutTab_facebook" class="shrink-0 py-1.5 px-3 rounded-xl transition flex items-center justify-center space-x-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 whitespace-nowrap">
+          <svg class="w-3.5 h-3.5 shrink-0 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+          </svg>
+          <span>Facebook</span>
+        </button>
+        <button onclick="switchTutorialPlatform('tiktok')" id="tutTab_tiktok" class="shrink-0 py-1.5 px-3 rounded-xl transition flex items-center justify-center space-x-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 whitespace-nowrap">
+          <svg class="w-3.5 h-3.5 shrink-0 text-slate-800 dark:text-cyan-400" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.24 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
+          </svg>
+          <span>TikTok</span>
+        </button>
+      </div>
+
+      <!-- Device Selector (Mobile vs Desktop) -->
+      <div class="flex items-center justify-center space-x-2 pt-0.5">
+        <button onclick="switchTutorialDevice('mobile')" id="tutDev_mobile" class="py-1.5 px-4 rounded-full text-xs font-extrabold transition flex items-center space-x-1.5 bg-slate-900 text-white dark:bg-indigo-600 shadow-sm shrink-0">
+          <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+          <span id="tutDevMobileText">Telefon</span>
+        </button>
+        <button onclick="switchTutorialDevice('desktop')" id="tutDev_desktop" class="py-1.5 px-4 rounded-full text-xs font-bold transition flex items-center space-x-1.5 text-slate-600 hover:text-slate-900 bg-slate-100 dark:bg-slate-800 dark:text-slate-300 shrink-0">
+          <i data-lucide="monitor" class="w-3.5 h-3.5"></i>
+          <span id="tutDevDesktopText">Kompyuter</span>
+        </button>
+      </div>
+
+      <!-- REAL ANIMATED GIF PLAYER CONTAINER -->
+      <div id="tutGifContainer" class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/70 p-3 sm:p-4 space-y-3 shadow-inner">
+        
+        <!-- Header with Format Badge -->
+        <div class="flex items-center justify-between text-xs font-bold px-1 gap-2">
+          <div class="flex items-center space-x-1.5 text-indigo-950 dark:text-indigo-200 min-w-0">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+            <span id="tutGifHeaderTitle" class="text-xs truncate">🎬 Jonli GIF-qo'llanma</span>
+          </div>
+          <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-indigo-600 text-white font-extrabold shadow-sm shrink-0" id="tutGifFormatBadge">Format: JSON</span>
+        </div>
+
+        <!-- GIF Display Screen (Real Animated Walkthrough) -->
+        <div class="relative overflow-hidden rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-950 shadow-2xl flex items-center justify-center min-h-[220px]">
+          <img id="tutGifImg" src="/gifs/instagram.gif" alt="Animated GIF Guide" class="w-full max-h-[300px] object-contain mx-auto rounded-xl transition-all duration-300" />
+          <div class="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[9px] font-bold text-slate-300 border border-white/10 flex items-center space-x-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+            <span>GIF LIVE</span>
+          </div>
+        </div>
+
+        <!-- Step Milestones -->
+        <div class="grid grid-cols-4 gap-1.5 text-center text-[10px] sm:text-[11px] font-bold">
+          <div class="p-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 text-indigo-700 dark:text-indigo-300 truncate">
+            <span>1. Menyu</span>
+          </div>
+          <div class="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 truncate">
+            <span>2. Sozlama</span>
+          </div>
+          <div class="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 truncate">
+            <span>3. JSON</span>
+          </div>
+          <div class="p-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 font-extrabold truncate">
+            <span>4. Qayerda</span>
+          </div>
+        </div>
+
+        <!-- Delivery & File Notification Card (Clear answer to: where it comes out & where it is sent) -->
+        <div id="tutDeliveryCard" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-sm space-y-1.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-extrabold text-slate-900 dark:text-white flex items-center space-x-1.5">
+              <span>📩</span><span id="tutDeliveryChannelTitle">Fayl qayerga keladi:</span>
+            </span>
+            <span id="tutDeliveryFileBadge" class="font-mono text-[11px] font-black px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+              following.json
+            </span>
+          </div>
+          <p id="tutDeliveryDesc" class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+            Email pochtangizga yuklab olish havolasi yuboriladi yoki ilovaning bildirishnomalar bo'limidan yuklab olasiz.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Collapsible Detailed Text Steps (Optional read) -->
+      <details class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-2.5 text-xs text-slate-700 dark:text-slate-300">
+        <summary class="font-bold cursor-pointer select-none text-[11px] text-slate-600 dark:text-slate-400 flex items-center justify-between">
+          <span id="tutTextStepsToggleTitle">📋 Matnli batafsil bosqichlarni ko'rish</span>
+          <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+        </summary>
+        <div id="tutStepsContent" class="space-y-2 pt-2.5 text-xs">
+          <!-- Dynamically populated -->
+        </div>
+      </details>
+
+      <button onclick="closeTutorialModal()" class="w-full py-3 rounded-2xl bg-slate-900 text-white font-extrabold text-xs shadow hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 transition">
+        Tushunarli, tekshirishga o'tish
+      </button>
+
+    </div>
+  </div>
+
+  <script src="/app.js?v=4.0"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

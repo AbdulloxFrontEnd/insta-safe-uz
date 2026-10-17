@@ -460,27 +460,60 @@ async def check_screenshot(
         "user_status": user_status
     }
 
-# Serve static directory
-PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "public")
-STATIC_DIR = PUBLIC_DIR if os.path.exists(PUBLIC_DIR) else os.path.join(os.path.dirname(__file__), "static")
-try:
-    os.makedirs(STATIC_DIR, exist_ok=True)
-except Exception:
-    pass
+# Serve static directory with resilient search across public, static, and root
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SEARCH_DIRS = [
+    os.path.join(BASE_DIR, "public"),
+    os.path.join(BASE_DIR, "static"),
+    BASE_DIR
+]
+
+def find_file(relative_name: str) -> Optional[str]:
+    for d in SEARCH_DIRS:
+        target = os.path.join(d, relative_name)
+        if os.path.exists(target):
+            return target
+    return None
+
+STATIC_DIR = next((d for d in SEARCH_DIRS if os.path.exists(os.path.join(d, "index.html"))), os.path.join(BASE_DIR, "public"))
 
 @app.get("/")
 async def get_index():
-    index_file = os.path.join(STATIC_DIR, "index.html")
-    if os.path.exists(index_file):
+    index_file = find_file("index.html")
+    if index_file and os.path.exists(index_file):
         response = FileResponse(index_file)
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
         return response
-    return {"status": "ok", "message": "InstaSafe Scanner API is running"}
+    return {
+        "status": "ok",
+        "message": "InstaSafe Scanner API is running, but index.html was not found in static/public directories",
+        "searched_dirs": SEARCH_DIRS,
+        "files_in_base_dir": os.listdir(BASE_DIR) if os.path.exists(BASE_DIR) else []
+    }
+
+@app.get("/app.js")
+async def get_app_js():
+    js_file = find_file("app.js")
+    if js_file and os.path.exists(js_file):
+        response = FileResponse(js_file, media_type="application/javascript")
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+        return response
+    raise HTTPException(status_code=404, detail="app.js not found")
+
+@app.get("/gifs/{gif_name}")
+async def get_gif(gif_name: str):
+    gif_file = find_file(os.path.join("gifs", gif_name)) or find_file(gif_name)
+    if gif_file and os.path.exists(gif_file):
+        return FileResponse(gif_file, media_type="image/gif")
+    raise HTTPException(status_code=404, detail=f"GIF {gif_name} not found")
 
 if os.path.exists(STATIC_DIR):
-    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
+    try:
+        app.mount("/static", StaticFiles(directory=STATIC_DIR, html=True), name="static")
+    except Exception:
+        pass
 
 if __name__ == "__main__":
     import uvicorn
