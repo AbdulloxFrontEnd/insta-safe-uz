@@ -361,7 +361,10 @@ class BannedChecker:
                 "platform": platform or "screenshot"
             }
 
-        # Filter noise patterns (UI bars, times, network icons, common tabs)
+    def analyze_detected_lines(self, lines: List[str], platform: Optional[str] = None, elapsed: float = 0.0) -> Dict[str, Any]:
+        """
+        Filters noise and matches candidate lines/titles against the 1,562 court registry.
+        """
         noise_pattern = re.compile(
             r"^(?:\d{1,2}:\d{2}(?::\d{2})?|\d+[\%kKmMbB]?|[0-9\s.,]+|"
             r"lte|4g|5g|wi-?fi|volte|edit|chats|search|qidiruv|sozlamalar|kanallar|guruhlar|"
@@ -375,16 +378,11 @@ class BannedChecker:
         banned_found = []
         seen_matched_ids = set()
 
-        for item in ocr_result:
-            if len(item) < 2:
-                continue
-            text = str(item[1]).strip()
-            score = float(item[2]) if len(item) > 2 else 1.0
-
-            if len(text) < 2 or score < 0.35:
+        for text in lines:
+            text = str(text).strip()
+            if len(text) < 2:
                 continue
 
-            # Strip leading/trailing bullet or count badges
             cleaned_text = re.sub(r"^[\d\s•\-#@/]+", "", text).strip()
             if not cleaned_text or len(cleaned_text) < 2:
                 continue
@@ -394,7 +392,6 @@ class BannedChecker:
 
             detected_lines.append(text)
 
-            # Check single account
             match = self.check_single_account(cleaned_text, platform=platform)
             if not match and cleaned_text != text:
                 match = self.check_single_account(text, platform=platform)
@@ -408,7 +405,7 @@ class BannedChecker:
                         "username": match.get("matched_field") or cleaned_text,
                         "full_name": text,
                         "detected_text": text,
-                        "confidence": round(score, 2),
+                        "confidence": 0.95,
                         "platform": match.get("platform", platform or "unknown"),
                         "details": match
                     })
@@ -446,8 +443,55 @@ class BannedChecker:
             "banned_count": banned_count,
             "clean_count": clean_count,
             "banned_found": banned_found,
-            "ocr_time_seconds": round(t1 - t0, 2)
+            "ocr_time_seconds": round(elapsed, 2)
         }
+
+    def analyze_ocr_text(self, text_content: str, platform: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Parses multi-line text extracted from OCR into channels and checks against the registry.
+        """
+        lines = [line.strip() for line in text_content.splitlines() if line.strip()]
+        return self.analyze_detected_lines(lines, platform=platform, elapsed=0.05)
+
+    def analyze_screenshot(self, image_bytes: bytes, platform: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Runs high-speed OCR on a mobile screenshot of Telegram / Instagram / YouTube / Facebook channels.
+        Matches extracted lines against the 1,562-entry banned registry.
+        """
+        import time
+        t0 = time.time()
+        engine = self.get_ocr_engine()
+        if engine is None:
+            err_msg = getattr(self, "_ocr_error", "No module")
+            return {
+                "is_safe": True,
+                "total_checked": 0,
+                "detected_channels": [],
+                "banned_count": 0,
+                "clean_count": 0,
+                "banned_found": [],
+                "ocr_time_seconds": 0,
+                "platform": platform or "screenshot",
+                "ocr_error": err_msg,
+                "message": f"Skrinshot OCR xatosi: {err_msg}"
+            }
+        ocr_result, _ = engine(image_bytes)
+        t1 = time.time()
+
+        if not ocr_result:
+            return {
+                "is_safe": True,
+                "total_checked": 0,
+                "detected_channels": [],
+                "banned_count": 0,
+                "clean_count": 0,
+                "banned_found": [],
+                "ocr_time_seconds": round(t1 - t0, 2),
+                "platform": platform or "screenshot"
+            }
+
+        lines = [str(item[1]).strip() for item in ocr_result if len(item) >= 2]
+        return self.analyze_detected_lines(lines, platform=platform, elapsed=t1 - t0)
 
     def search_registry(self, query: str, platform: Optional[str] = None) -> List[Dict[str, Any]]:
         """

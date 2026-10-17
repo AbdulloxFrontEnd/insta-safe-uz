@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -2459,34 +2460,105 @@ async function handleScreenshotUpload(event) {
   formData.append('platform', selectedPlatform);
   if (currentTelegramId) formData.append('telegram_id', currentTelegramId);
 
+  let data = null;
+  let useClientOcr = false;
+
   try {
     const res = await fetch('/api/check-screenshot', {
       method: 'POST',
       body: formData
     });
-    
+
     if (!res.ok) {
-      const errText = await res.text();
-      showLoading(false);
-      renderErrorAlert(`Server xatosi (${res.status}): ${errText.slice(0, 150)}`);
-      return;
+      useClientOcr = true;
+    } else {
+      data = await res.json();
+      if (data.result && (data.result.ocr_error || (data.result.total_checked === 0 && data.result.banned_count === 0 && data.result.ocr_time_seconds === 0))) {
+        useClientOcr = true;
+      }
     }
-
-    const data = await res.json();
-    showLoading(false);
-
-    if (!data.success) {
-      if (data.error_type === 'PAYMENT_REQUIRED') openPaymentModal();
-      else renderErrorAlert(data.message || (currentLang === 'uz' ? "Skrinshotni o'qib bo'lmadi" : "Не удалось распознать скриншот"));
-      return;
-    }
-
-    if (data.user_status) updateUserBalanceUI(data.user_status);
-    renderResults(data.result, file.name);
   } catch (err) {
-    showLoading(false);
-    renderErrorAlert(err.message);
+    useClientOcr = true;
   }
+
+  // Automatic seamless client-side browser OCR fallback (Tesseract.js)
+  if (useClientOcr) {
+    try {
+      showLoading(
+        true,
+        currentLang === 'uz' ? "AI skrinshotni o'qimoqda..." : "ИИ считывает каналы...",
+        currentLang === 'uz' ? "Brauzer AI orqali harflar aniqlanmoqda..." : "Оптическое распознавание в браузере..."
+      );
+      const ocrText = await runBrowserOCR(compressedFile);
+      if (!ocrText || !ocrText.trim()) {
+        showLoading(false);
+        renderErrorAlert(currentLang === 'uz' ? "Skrinshotda matn topilmadi. Boshqa tiniqroq rasm tanlang." : "На скриншоте не найдено текста каналов. Выберите более четкое фото.");
+        return;
+      }
+
+      showLoading(
+        true,
+        currentLang === 'uz' ? "Sud reyestri bilan tekshirilmoqda..." : "Сверка с судебным реестром...",
+        currentLang === 'uz' ? "1560+ ta rasmiy manbalar bo'yicha tahlil" : "Анализ по 1560+ запрещенным источникам"
+      );
+
+      const checkRes = await fetch('/api/check-ocr-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          raw_text: ocrText,
+          platform: selectedPlatform,
+          telegram_id: currentTelegramId ? parseInt(currentTelegramId) : null
+        })
+      });
+      data = await checkRes.json();
+    } catch (ocrErr) {
+      showLoading(false);
+      renderErrorAlert("OCR xatosi: " + ocrErr.message);
+      return;
+    }
+  }
+
+  showLoading(false);
+
+  if (!data || !data.success) {
+    if (data && data.error_type === 'PAYMENT_REQUIRED') openPaymentModal();
+    else renderErrorAlert((data && data.message) || (currentLang === 'uz' ? "Skrinshotni o'qib bo'lmadi" : "Не удалось распознать скриншот"));
+    return;
+  }
+
+  if (data.user_status) updateUserBalanceUI(data.user_status);
+  renderResults(data.result, file.name);
+}
+
+// Client-side Browser OCR Engine (runs locally in browser via WebWorker/WASM)
+async function runBrowserOCR(imageBlobOrFile) {
+  if (typeof Tesseract === 'undefined') {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  const { data: { text } } = await Tesseract.recognize(
+    imageBlobOrFile,
+    'rus+eng',
+    {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          const pct = Math.round((m.progress || 0) * 100);
+          const sub = document.getElementById('loadingSub');
+          if (sub) {
+            sub.innerText = (currentLang === 'uz' ? "AI matnlarni aniqlamoqda: " : "Распознавание ИИ: ") + pct + "%";
+          }
+        }
+      }
+    }
+  );
+  return text;
 }
 
 // Universal File Upload Handler (Telegram result.json, Instagram following.json, YouTube CSV, TXT)

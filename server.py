@@ -87,6 +87,11 @@ class CheckListRequest(BaseModel):
     platform: Optional[str] = None
     telegram_id: Optional[int] = None
 
+class CheckOCRTextRequest(BaseModel):
+    raw_text: str
+    platform: Optional[str] = None
+    telegram_id: Optional[int] = None
+
 class CreateOrderRequest(BaseModel):
     telegram_id: int
     package: str = "single"  # single (10000), pack3 (25000), unlimited (49000)
@@ -363,6 +368,36 @@ def check_list(req: CheckListRequest):
 
     return {
         "success": True,
+        "result": analysis,
+        "user_status": user_status
+    }
+
+# CHECK OCR EXTRACTED TEXT (Browser or external OCR engine)
+@app.post("/api/check-ocr-text")
+@app.post("/check-ocr-text")
+def check_ocr_text(req: CheckOCRTextRequest):
+    if req.telegram_id:
+        can_check, left, ctype = db.can_perform_check(req.telegram_id)
+        if not can_check:
+            return {
+                "success": False,
+                "error_type": "PAYMENT_REQUIRED",
+                "message": "Вы использовали бесплатную попытку проверки. Пожалуйста, приобретите доступ для продолжения."
+            }
+
+    raw = req.raw_text or ""
+    analysis = checker.analyze_ocr_text(raw, platform=req.platform)
+
+    user_status = None
+    if req.telegram_id:
+        db.deduct_check(req.telegram_id)
+        user_status = db.get_user_status(req.telegram_id)
+
+    return {
+        "success": True,
+        "file_name": "ocr_text.txt",
+        "platform": analysis.get("platform", req.platform or "screenshot"),
+        "total_parsed": analysis.get("total_checked", 0),
         "result": analysis,
         "user_status": user_status
     }
