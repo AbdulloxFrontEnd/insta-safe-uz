@@ -34,7 +34,12 @@ app.add_middleware(
 )
 
 @app.middleware("http")
-async def no_cache_middleware(request: Request, call_next):
+async def vercel_routing_and_cache_middleware(request: Request, call_next):
+    # Restore original path if rewritten by Vercel
+    matched = request.headers.get("x-matched-path")
+    if matched and matched != request.scope.get("path") and not matched.endswith("index.py") and not matched.endswith("index"):
+        request.scope["path"] = matched
+
     response = await call_next(request)
     path = request.url.path
     if path == "/" or path.endswith((".html", ".js", ".css")):
@@ -42,6 +47,20 @@ async def no_cache_middleware(request: Request, call_next):
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
     return response
+
+@app.get("/api/debug")
+@app.get("/debug")
+def debug_server(request: Request):
+    data_dir = os.path.join(os.path.dirname(__file__), "data")
+    return {
+        "status": "ok",
+        "url_path": request.url.path,
+        "scope_path": request.scope.get("path"),
+        "x_matched_path": request.headers.get("x-matched-path"),
+        "total_banned_items": len(checker.all_items),
+        "data_dir_exists": os.path.exists(data_dir),
+        "data_dir_files": os.listdir(data_dir) if os.path.exists(data_dir) else []
+    }
 
 checker = BannedChecker()
 
