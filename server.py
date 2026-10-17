@@ -99,6 +99,7 @@ def get_info():
     }
 
 @app.get("/api/banned-list")
+@app.get("/banned-list")
 def get_banned_list(platform: Optional[str] = None, search: Optional[str] = None):
     plat = platform.lower().strip() if platform and platform.lower().strip() != "all" else None
     results = checker.search_registry(query=search or "", platform=plat)
@@ -109,12 +110,14 @@ def get_banned_list(platform: Optional[str] = None, search: Optional[str] = None
     }
 
 @app.get("/api/user/status")
+@app.get("/user/status")
 def get_user_status(telegram_id: int = Query(...), username: Optional[str] = "", first_name: Optional[str] = ""):
     user = db.get_or_create_user(telegram_id, username or "", first_name or "")
     status = db.get_user_status(telegram_id)
     return {"success": True, "user": status}
 
 @app.post("/api/payment/create-order")
+@app.post("/payment/create-order")
 def create_payment_order(req: CreateOrderRequest):
     PACKAGES = {
         "single": {"name": "1 разовая проверка", "amount": 10000, "checks": 1},
@@ -270,6 +273,7 @@ def get_admin_stats():
 
 # FAST SINGLE CHECK (Telegram channel, YouTube channel, Instagram account, Facebook page)
 @app.post("/api/check-single")
+@app.post("/check-single")
 def check_single(req: CheckSingleRequest):
     query = req.query.strip()
     if not query:
@@ -357,6 +361,7 @@ def check_list(req: CheckListRequest):
 
 # UNIVERSAL FILE CHECK: supports Instagram following.json, Telegram Desktop result.json, YouTube CSV, and TXT lists!
 @app.post("/api/check-file")
+@app.post("/check-file")
 async def check_file(file: UploadFile = File(...), telegram_id: Optional[int] = Form(None)):
     if telegram_id:
         can_check, left, ctype = db.can_perform_check(telegram_id)
@@ -445,6 +450,7 @@ async def check_file(file: UploadFile = File(...), telegram_id: Optional[int] = 
 
 # HIGH-SPEED SCREENSHOT CHECK (Telegram / Instagram / YouTube / Facebook channels screenshot)
 @app.post("/api/check-screenshot")
+@app.post("/check-screenshot")
 async def check_screenshot(
     file: UploadFile = File(...),
     platform: Optional[str] = Form(None),
