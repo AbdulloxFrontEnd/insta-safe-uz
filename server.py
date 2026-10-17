@@ -463,18 +463,24 @@ async def check_screenshot(
 # Serve static directory
 PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "public")
 STATIC_DIR = PUBLIC_DIR if os.path.exists(PUBLIC_DIR) else os.path.join(os.path.dirname(__file__), "static")
-os.makedirs(STATIC_DIR, exist_ok=True)
+try:
+    os.makedirs(STATIC_DIR, exist_ok=True)
+except Exception:
+    pass
 
 @app.get("/")
 async def get_index():
     index_file = os.path.join(STATIC_DIR, "index.html")
-    response = FileResponse(index_file)
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
-    return response
+    if os.path.exists(index_file):
+        response = FileResponse(index_file)
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
+    return {"status": "ok", "message": "InstaSafe Scanner API is running"}
 
-app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
+if os.path.exists(STATIC_DIR):
+    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn
