@@ -1,0 +1,10 @@
+{
+  "bot_username": "testaccforinstasafe",
+  "telegram_bot_token": "8794166440:AAEbWoak1ScCbEk9kzYgro_FgN4YlvZRpEo",
+  "webapp_url": "https://provisions-theater-lived-intranet.trycloudflare.com",
+  "click_service_id": "YOUR_CLICK_SERVICE_ID",
+  "click_merchant_id": "YOUR_CLICK_MERCHANT_ID",
+  "click_secret_key": "YOUR_CLICK_SECRET_KEY",
+  "payme_merchant_id": "YOUR_PAYME_MERCHANT_ID",
+  "payme_secret_key": "YOUR_PAYME_SECRET_KEY"
+}
