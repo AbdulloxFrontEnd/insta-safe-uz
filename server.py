@@ -463,9 +463,15 @@ async def check_screenshot(
 # Serve static directory with resilient search across public, static, and root
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SEARCH_DIRS = [
+    BASE_DIR,
     os.path.join(BASE_DIR, "public"),
     os.path.join(BASE_DIR, "static"),
-    BASE_DIR
+    os.getcwd(),
+    os.path.join(os.getcwd(), "public"),
+    os.path.join(os.getcwd(), "static"),
+    "/var/task",
+    "/var/task/public",
+    "/var/task/static",
 ]
 
 def find_file(relative_name: str) -> Optional[str]:
@@ -475,10 +481,9 @@ def find_file(relative_name: str) -> Optional[str]:
             return target
     return None
 
-STATIC_DIR = next((d for d in SEARCH_DIRS if os.path.exists(os.path.join(d, "index.html"))), os.path.join(BASE_DIR, "public"))
+STATIC_DIR = next((d for d in SEARCH_DIRS if os.path.exists(os.path.join(d, "index.html"))), BASE_DIR)
 
-@app.get("/")
-async def get_index():
+async def serve_index():
     index_file = find_file("index.html")
     if index_file and os.path.exists(index_file):
         response = FileResponse(index_file)
@@ -488,12 +493,22 @@ async def get_index():
         return response
     return {
         "status": "ok",
-        "message": "InstaSafe Scanner API is running, but index.html was not found in static/public directories",
+        "message": "InstaSafe Scanner API is running, but index.html was not found",
         "searched_dirs": SEARCH_DIRS,
         "files_in_base_dir": os.listdir(BASE_DIR) if os.path.exists(BASE_DIR) else []
     }
 
+@app.get("/")
+@app.get("/api/index.py")
+@app.get("/api")
+@app.get("/api/")
+@app.get("/index.html")
+async def get_index():
+    return await serve_index()
+
 @app.get("/app.js")
+@app.get("/static/app.js")
+@app.get("/public/app.js")
 async def get_app_js():
     js_file = find_file("app.js")
     if js_file and os.path.exists(js_file):
@@ -503,6 +518,8 @@ async def get_app_js():
     raise HTTPException(status_code=404, detail="app.js not found")
 
 @app.get("/gifs/{gif_name}")
+@app.get("/static/gifs/{gif_name}")
+@app.get("/public/gifs/{gif_name}")
 async def get_gif(gif_name: str):
     gif_file = find_file(os.path.join("gifs", gif_name)) or find_file(gif_name)
     if gif_file and os.path.exists(gif_file):
