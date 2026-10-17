@@ -317,7 +317,10 @@ class BannedChecker:
             try:
                 from rapidocr_onnxruntime import RapidOCR
                 self._ocr_engine = RapidOCR()
+                self._ocr_error = None
             except Exception as e:
+                import traceback
+                self._ocr_error = str(e)
                 self._ocr_engine = None
         return self._ocr_engine
 
@@ -330,6 +333,7 @@ class BannedChecker:
         t0 = time.time()
         engine = self.get_ocr_engine()
         if engine is None:
+            err_msg = getattr(self, "_ocr_error", "No module")
             return {
                 "is_safe": True,
                 "total_checked": 0,
@@ -339,7 +343,8 @@ class BannedChecker:
                 "banned_found": [],
                 "ocr_time_seconds": 0,
                 "platform": platform or "screenshot",
-                "message": "Skrinshotni o'qish (OCR) faqat Telegram botimizda to'liq ishlaydi. Iltimos botdan foydalaning yoki nomni matn sifatida tekshiring."
+                "ocr_error": err_msg,
+                "message": f"Skrinshot OCR xatosi: {err_msg}"
             }
         ocr_result, _ = engine(image_bytes)
         t1 = time.time()

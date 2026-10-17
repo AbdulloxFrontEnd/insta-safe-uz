@@ -2380,6 +2380,45 @@ function copyShareLink() {
   });
 }
 
+// Client-side image compression to bypass Vercel 4.5MB payload limit and speed up OCR
+async function compressImageForOCR(file) {
+  try {
+    return await new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1600;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(new File([blob], "screenshot.jpg", { type: "image/jpeg" }));
+          } else {
+            resolve(file);
+          }
+        }, 'image/jpeg', 0.88);
+      };
+      img.onerror = () => resolve(file);
+      img.src = URL.createObjectURL(file);
+    });
+  } catch (e) {
+    return file;
+  }
+}
+
 // High-Speed Mobile Screenshot OCR Upload Handler
 async function handleScreenshotUpload(event) {
   let file = null;
@@ -2413,8 +2452,10 @@ async function handleScreenshotUpload(event) {
     currentLang === 'uz' ? "1560+ ta rasmiy sud qarorlari bilan tekshirilmoqda (2 soniya)" : "Сверяю каналы на фото с базой Верховного суда (2 сек.)"
   );
 
+  const compressedFile = await compressImageForOCR(file);
+
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('file', compressedFile);
   formData.append('platform', selectedPlatform);
   if (currentTelegramId) formData.append('telegram_id', currentTelegramId);
 
@@ -2423,6 +2464,14 @@ async function handleScreenshotUpload(event) {
       method: 'POST',
       body: formData
     });
+    
+    if (!res.ok) {
+      const errText = await res.text();
+      showLoading(false);
+      renderErrorAlert(`Server xatosi (${res.status}): ${errText.slice(0, 150)}`);
+      return;
+    }
+
     const data = await res.json();
     showLoading(false);
 
